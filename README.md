@@ -1,4 +1,4 @@
-Bank-Marketing-Project
+BANK MARKETING PROJECT
 
 Citation Request:
   This dataset is publicly available for research. The details are described in [Moro et al., 2014]. 
