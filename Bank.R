@@ -259,6 +259,7 @@ library(irr)
 library(ROCR)
 library(caret)
 library(gmodels)
+set.seed(141)
 train_ind <- createDataPartition(bank$y, p=0.75, list=FALSE)
 train_data <- bank[train_ind, ]
 test_data <- bank[-train_ind, ]
@@ -266,6 +267,37 @@ test_data <- bank[-train_ind, ]
 # The target variable y is uniformly distributed among both train and test sets
 prop.table(table(train_data$y))
 prop.table(table(test_data$y))
+
+
+### Naive Bayes ###
+
+library(e1071)
+
+set.seed(141)
+# Building naive bayes model using train data
+bayes_model <- naiveBayes(train_data[-21], train_data$y, laplace = 3)
+bayes_model
+
+# Applying the model on the test data to predict the dependent variable
+bayes_pred <- predict(bayes_model, test_data[-21])
+str(bayes_pred)
+
+# The model has accuracy of around 86% which is good. The kappa value of  0.42 suggests a moderate
+# agreement between the true and predicted values
+CrossTable(bayes_pred, test_data$y)
+confusionMatrix(bayes_pred,test_data$y, positive = "yes")
+nb_accuracy <- confusionMatrix(bayes_pred,test_data$y, positive = "yes")$overall[[1]]
+nb_accuracy <- nb_accuracy*100
+nb_accuracy
+
+# Evaluation of the model using ROC curve and AUC(area under the curve) shows the model is performing fine in predicting
+# the false positives and false negatives with auc value of 0.75, which has value of 1 for ideal case.
+pred_nb <- prediction(predictions = as.numeric(bayes_pred), labels = as.numeric(test_data$y))
+perf_nb <- performance(pred_nb,measure = "tpr", x.measure = "fpr")
+plot(perf_nb, main="Naive Bayes")
+perf.auc_nb <- performance(pred_nb, measure = "auc")
+nb_auc <- unlist(perf.auc_nb@y.values)
+nb_auc
 
 
 
@@ -285,146 +317,315 @@ str(tree_pred)
 
 # Evaluating model performance by comparing the predicted variable with true labels
 
-# The model has an accuracy of 91.36% and p-value is < 2.2e-16 which implies that the model is good. 
-# The kappa value is 0.534 which indicates a moderate agreement between true and predicted values
-#  The sensitivity and specificity of the model are 0.5336 and 0.9618, which implies that the model is good at
-# prediciting the negative cases (y="no") more accurately than positive cases(y="yes")
+# The model has an accuracy of 91.32% and p-value is < 2.2e-16 which implies that the model is performing well. 
+# The kappa value is 0.533 which indicates a moderate agreement between true and predicted values
+# The sensitivity and specificity of the model are 0.53 and 0.96, which are the false negative and false positive
+# rates respectively
 CrossTable(tree_pred, test_data$y)
 confusionMatrix(tree_pred,test_data$y, positive = "yes")
+dt_accuracy <- confusionMatrix(tree_pred,test_data$y, positive = "yes")$overall[[1]]
+dt_accuracy <- dt_accuracy*100
+dt_accuracy
 
 # The ROC curve suggests that the model is doing a fine job in predicting the true negatives and false positives
-# with a area under the curve value of 0.7477
+# with a area under the curve value of 0.74
 pred_dt <- prediction(predictions = as.numeric(tree_pred), labels = as.numeric(test_data$y))
 perf_dt <- performance(pred_dt,measure = "tpr", x.measure = "fpr")
 plot(perf_dt, main="decision tree")
 perf.auc <- performance(pred_dt, measure = "auc")
-unlist(perf.auc@y.values)
+dt_auc <- unlist(perf.auc@y.values)
+dt_auc
 
-# The decision tree we built has very good accuracy, but while using it in reality we don't want our model to
-# classify a huge number of true positives as false negatives, which means classifying a person who is actually
-# going to take the subscription as "no" which is a big mistake. So, we assign cost for each of errors and
-# train a model that penalises false negatives cases more than false positive cases. This results in model classifying
-# the people who are at the edge of being classified as FN or FP into FP's. It increases the false positive rate but
-# making few extra calls is better than missing a positive client.
+
+# We can improve performance of the model in classifying FP and FN and thereby increasing the value of auc by assigning
+# cost or penalty for the making a FP or FN mistake. Here we assignmed more penalty for FN than FP because it is better to
+# make few extra calls for the people who won't actually take the plan, than classifying the person who would actually take
+# the subscription as "no" and avoid contacting him altogether
 
 # Creating cost error matrix 
 matrix_dimensions <- list(c("no", "yes"), c("no", "yes"))
 names(matrix_dimensions) <- c("predicted", "actual")
 matrix_dimensions
-error_cost <- matrix(c(0, 1, 4, 0), nrow = 2, dimnames = matrix_dimensions)
+error_cost <- matrix(c(0, 1, 5, 0), nrow = 2, dimnames = matrix_dimensions)
 error_cost
 
 # Training a decision tree model using the error_cost matrix
 set.seed(141)
-decision_tree <- C5.0(train_data[-21], train_data$y, trails=20, costs=error_cost)
+decision_tree_2 <- C5.0(train_data[-21], train_data$y, trails=20, costs=error_cost)
 summary(decision_tree)
 
 # Applying the new model to test set
-tree_pred <- predict(decision_tree, test_data[-21])
+tree_pred_2 <- predict(decision_tree_2, test_data[-21])
+str(tree_pred_2)
 
-# The accuracy of the model was slightly reduced to 88.19%. But the value of sensitivity is very significantly improved
-confusionMatrix(tree_pred,test_data$y, positive = "yes")
+# The accuracy of the model was slightly reduced to 88.06%. But the value of sensitivity is very significantly improved
+confusionMatrix(tree_pred_2,test_data$y, positive = "yes")
+dt2_accuracy <- confusionMatrix(tree_pred_2,test_data$y, positive = "yes")$overall[[1]]
+dt2_accuracy <- dt2_accuracy*100
+dt2_accuracy
 
-# The ROC curve also reflects improvement in the prediction of true positives
-pred_dt <- prediction(predictions = as.numeric(tree_pred), labels = as.numeric(test_data$y))
-perf_dt <- performance(pred_dt,measure = "tpr", x.measure = "fpr")
-plot(perf_dt, main="decision tree")
-perf.auc_dt <- performance(pred_dt, measure = "auc")
-unlist(perf.auc_dt@y.values)
+# The ROC curve also reflects improvement in the prediction of true positives with auc of 0.8845
+pred_dt_2 <- prediction(predictions = as.numeric(tree_pred_2), labels = as.numeric(test_data$y))
+perf_dt_2 <- performance(pred_dt_2,measure = "tpr", x.measure = "fpr")
+plot(perf_dt_2, main="decision tree")
+perf.auc_dt_2 <- performance(pred_dt_2, measure = "auc")
+dt2_auc <- unlist(perf.auc_dt_2@y.values)
+dt2_auc
 
 
 
 ### Neural Networks ###
 
-set.seed(141)
 library(nnet)
+
+set.seed(141)
 # creating a neural network model using training set
 nnet_model <- nnet(y~age + job + marital + education + 
                        default + housing + loan + contact + 
                        month + day_of_week + duration + campaign + 
                        pdays + previous + poutcome + emp.var.rate + 
                        cons.price.idx + cons.conf.idx + euribor3m + 
-                       nr.employed, data=train_data, size=3, decay=0.1)
-# The model has 53 input nodes, 3 hidden nodes and 1 output node
+                       nr.employed, data=train_data, size=9, decay=0.1)
+# The model has 53 input nodes, 9 hidden nodes and 1 output node
 nnet_model$n
 
 # applying the neural network model to test set
 nnet_pred <- predict(nnet_model, test_data[-21], type="class")
 str(nnet_pred)
 
-# The accuracy of the model is 91.11% and p-value is 1.707e-15 which is very good. kappa is 0.51 
-# which indicates a moderate agreement between predicted and true values. But the sensitivity of the
-# model is bit low
+# The accuracy of the model is around 91% which is very good. And the kappa value is indicating
+# a moderate agreement between predicted and true values.
 CrossTable(nnet_pred, test_data$y)
 confusionMatrix(nnet_pred,test_data$y, positive = "yes")
+nnet_accuracy <- confusionMatrix(nnet_pred,test_data$y, positive = "yes")$overall[[1]]
+nn_accuracy <- nnet_accuracy*100
+nn_accuracy
 
-# ROC curve of the predicted and true values indicating the relationship between true positive rate and
-# false positive rate. The area under the curve for the plot is 0.7386739
+# Building ROC curve and calculating AUC of the predicted and true values indicating the relationship
+# between true positive rate and false positive rate.
 nnet_pred_fac <- as.factor(nnet_pred) 
 pred_nn <- prediction(predictions = as.numeric(nnet_pred_fac), labels = as.numeric(test_data$y))
 perf_nn <- performance(pred_nn,measure = "tpr", x.measure = "fpr")
 plot(perf_nn, main="neural net")
 perf.auc_nn <- performance(pred_nn, measure = "auc")
-unlist(perf.auc_nn@y.values)
+nn_auc <- unlist(perf.auc_nn@y.values)
+nn_auc
+
 
 # Lets try to improve the model peformance by using the function pcaNNet which applies principal component analysis to
-# the variables before building a neural network model. And also size of the hidden units were reduced to 2 for the model to
-# generalize more on future data and to avoid overfitting
-set.seed(150)
+# the variables before building a neural network model.
+set.seed(141)
 nnet_model_2 <- pcaNNet(y~age + job + marital + education + 
             default + housing + loan + contact + 
             month + day_of_week + duration + campaign + 
             pdays + previous + poutcome + emp.var.rate + 
             cons.price.idx + cons.conf.idx + euribor3m + 
-            nr.employed, data=train_data, size=2, decay=0.1)
+            nr.employed, data=train_data, size=8, decay=0.1)
+
 # predicting the target variable of the training set using the model
 nnet_pred_2 <- predict(nnet_model_2, test_data[,-21], type="class")
 str(nnet_pred_2)
 
 # The sensitivity of the model fairly increased but it is still less efficient compared to the decision tree model
 confusionMatrix(nnet_pred_2,test_data$y, positive = "yes")
+nn2_accuracy <- confusionMatrix(nnet_pred_2,test_data$y, positive = "yes")$overall[[1]]
+nn2_accuracy <- nn2_accuracy*100
+nn2_accuracy
+
+# Plotting the ROC curve using the true and predicted values of target variable and computing area under the
+# ROC curve
+nnet_pred_fac_2 <- as.factor(nnet_pred_2) 
+pred_nn_2 <- prediction(predictions = as.numeric(nnet_pred_fac_2), labels = as.numeric(test_data$y))
+perf_nn_2 <- performance(pred_nn_2,measure = "tpr", x.measure = "fpr")
+plot(perf_nn_2, main="neural net")
+perf.auc_nn_2 <- performance(pred_nn_2, measure = "auc")
+nn2_auc <- unlist(perf.auc_nn_2@y.values)
+nn2_auc
 
 
 ### Support Vector Machine ###
 
 library(kernlab)
-svm_model <- ksvm(y~., data=train_data, kernel = "rbfdot")
-summary(svm_model)
+
+# Building a SVM model using training set
+set.seed(141)
+svm_model <- ksvm(y~., data=train_data, kernel = "rbfdot", C=9)
+svm_model
+
+# Predicting the target variable by supplying test data for the model
 svm_pred <- predict(svm_model, test_data[-21])
 str(svm_pred)
+
+# The accuracy of the SVM model is around 91% and a kappa value of 0.46
 CrossTable(svm_pred, test_data$y)
-kappa2(data.frame(svm_pred, test_data$y))$value
 confusionMatrix(svm_pred,test_data$y, positive = "yes")
+svm_accuracy <- confusionMatrix(svm_pred,test_data$y, positive = "yes")$overall[[1]]
+svm_accuracy <- svm_accuracy*100
+svm_accuracy
+
+# ROC curve and AUC
 pred_svm <- prediction(predictions = as.numeric(svm_pred), labels = as.numeric(test_data$y))
 perf_svm <- performance(pred_svm,measure = "tpr", x.measure = "fpr")
 plot(perf_svm, main="SVM")
+perf.auc_svm <- performance(pred_svm, measure = "auc")
+svm_auc <- unlist(perf.auc_svm@y.values)
+svm_auc
 
-library(e1071)
-bayes_model <- naiveBayes(train_data[-21], train_data$y, laplace = 1)
-bayes_pred <- predict(bayes_model, test_data[-21])
-CrossTable(bayes_pred, test_data$y)
-kappa2(data.frame(bayes_pred, test_data$y))$value
-confusionMatrix(bayes_pred,test_data$y, positive = "yes")
-pred_nb <- prediction(predictions = as.numeric(bayes_pred), labels = as.numeric(test_data$y))
-perf_nb <- performance(pred_nb,measure = "tpr", x.measure = "fpr")
-plot(perf_nb, main="Naive Bayes")
 
+
+### Random Forest ###
 
 library(randomForest)
-rf_model <- randomForest(y~., ntree=100, data=train_data)
-plot(rf_model)
+
+# Building a random forest model using training data
+set.seed(141)
+rf_model <- randomForest(y~., ntree=80, data=train_data)
+rf_model
+
+# Generating a variable importance graph using the random forest model we built. The variables with high
+# Gini index are the most important variables. So, the variables at the top of the y-axis are more important
+# in building a model than variables at the bottom
 varImpPlot(rf_model,  
            sort = T,
            n.var=20,
            main="Top 20 - Variable Importance")
+
+# Applying our model to test data for predicting the target variable y
 rf_pred <- predict(rf_model, test_data[-21])
+str(rf_pred)
+
+# The accuracy of the model is around 91%
 CrossTable(rf_pred, test_data$y)
-kappa2(data.frame(rf_pred, test_data$y))$value
 confusionMatrix(rf_pred,test_data$y, positive = "yes")
+rf_accuracy <- confusionMatrix(rf_pred,test_data$y, positive = "yes")$overall[[1]]
+rf_accuracy <- rf_accuracy*100
+rf_accuracy
+
+# ROC curve and AUC for the Random Forest model
 pred_rf <- prediction(predictions = as.numeric(rf_pred), labels = as.numeric(test_data$y))
 perf_rf <- performance(pred_rf,measure = "tpr", x.measure = "fpr")
 plot(perf_rf, main="Random Forest")
+perf.auc_rf <- performance(pred_rf, measure = "auc")
+rf_auc <- unlist(perf.auc_rf@y.values)
+rf_auc
+
+
+### Comparision of models ###
+
+# Creating a matrix containing accuracy and AUC values of all the models
+compare <- matrix(c(nb_accuracy, nb_auc, dt_accuracy, dt_auc, dt2_accuracy, dt2_auc,
+                       nn_accuracy, nn_auc, nn2_accuracy, nn2_auc,
+                       svm_accuracy, svm_auc, rf_accuracy, rf_auc),ncol=2, byrow = T)
+
+compare <- as.data.frame(compare)
+
+rownames(compare) <- c("NaiveBayes", "DecisionTree1", "DecisionTree2", "NeuralNetwork1",
+                       "NeuralNetwork2", "SVM", "RandomForest")
+
+names(compare) <- c("Accuracy", "AUC")
+compare
+
+# Adding a third column for the comparision matrix which serves as final evaluation metric
+compare$evaluation <- (compare$Accuracy^2)*(compare$AUC)
+compare
 
 
 
+### If FN and FP rates are considered significant in addition to the accuracy, we need to select the
+# model with highest evaluation metric. The 2nd Decision Tree model is a clear standout in this case ###
+compare[order(compare$evaluation, decreasing = T), ]
 
+### If model accuracy is the only metric to be considered, then we can select any of Random Forest, Neural network 1,
+# Decision tree 1 or Support Vector Machines, as all these models have almost the same accuracy ###
+compare[order(compare$Accuracy, decreasing = T), ]
+
+
+
+### K-fold cross validation ###
+
+
+# Performing K-fold cross validation on the selected models to get a better estimation 
+# of its future performance
+
+# Random Forest #
+# 10-fold cross validation of the random forest model
+set.seed(141)
+folds <- createFolds(bank$y, k=10)
+cv_results <- lapply(folds, function (x) {
+    bank_train <- bank[-x, ]
+    bank_test <- bank[x, ]
+    bank_model <- randomForest(y~., ntree=80, data=bank_train)
+    bank_predict <- predict(bank_model, bank_test[-21])
+    accuracy <- confusionMatrix(bank_predict, bank_test$y, positive = "yes")$overall[[1]]
+    accuracy <- accuracy*100
+    return(accuracy)
+})
+
+# The average accuracy of our random forest models is 91.5% which is impressive
+cv_rf <- mean(unlist(cv_results))
+cv_rf
+
+
+# Neural network #
+# 10-fold cross validation of the Neural network 1 model #
+set.seed(141)
+folds <- createFolds(bank$y, k=10)
+cv_results <- lapply(folds, function (x) {
+    bank_train <- bank[-x, ]
+    bank_test <- bank[x, ]
+    bank_model <- nnet(y~age + job + marital + education + 
+                           default + housing + loan + contact + 
+                           month + day_of_week + duration + campaign + 
+                           pdays + previous + poutcome + emp.var.rate + 
+                           cons.price.idx + cons.conf.idx + euribor3m + 
+                           nr.employed,data=bank_train, size=9, decay=0.1)
+    bank_predict <- predict(bank_model, bank_test[-21], type="class")
+    accuracy <- confusionMatrix(bank_predict, bank_test$y, positive = "yes")$overall[[1]]
+    accuracy <- accuracy*100
+    return(accuracy)
+})
+
+# The average accuracy of the neural network model is 90.4% which is very good but just slightly
+# less than the random forest model
+cv_nn <- mean(unlist(cv_results))
+cv_nn
+
+
+# Decision tree #
+# 10-fold cross validation of the Decision tree 1 model
+set.seed(141)
+folds <- createFolds(bank$y, k=10)
+cv_results <- lapply(folds, function (x) {
+    bank_train <- bank[-x, ]
+    bank_test <- bank[x, ]
+    bank_model <- C5.0(bank_train[-21],bank_train$y, trails=20)
+    bank_predict <- predict(bank_model, bank_test[-21], type="class")
+    accuracy <- confusionMatrix(bank_predict, bank_test$y, positive = "yes")$overall[[1]]
+    accuracy <- accuracy*100
+    return(accuracy)
+})
+
+# The decision tree model has an average accuracy of 91.3%
+cv_dt <- mean(unlist(cv_results))
+cv_dt
+
+# 
+set.seed(141)
+folds <- createFolds(bank$y, k=10)
+cv_results <- lapply(folds, function (x) {
+    bank_train <- bank[-x, ]
+    bank_test <- bank[x, ]
+    bank_model <- ksvm(y~., data=bank_train, kernel = "rbfdot", C=9)
+    bank_predict <- predict(bank_model, bank_test[-21])
+    accuracy <- confusionMatrix(bank_predict, bank_test$y, positive = "yes")$overall[[1]]
+    accuracy <- accuracy*100
+    return(accuracy)
+})
+
+# The SVM model has an average accuracy of 90.9%
+cv_svm <- mean(unlist(cv_results))
+cv_svm
+
+
+# Random forest model is more robust and stable in predicting future outcomes and it is the best model to
+# use if accuracy is the only criterion #
