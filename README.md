@@ -61,4 +61,4 @@ Output variable (desired target):
 
 21 - y - has the client subscribed a term deposit? (binary: "yes","no")
 
-8. Missing Attribute Values: There are several missing values in some categorical attributes, all coded with the "unknown" label. These missing values can be treated as a possible class label or using deletion or imputation techniques. 
+Missing Attribute Values: There are several missing values in some categorical attributes, all coded with the "unknown" label. These missing values can be treated as a possible class label or using deletion or imputation techniques. 
