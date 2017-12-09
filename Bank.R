@@ -1,5 +1,6 @@
 setwd("~/Downloads/ML/bank-additional")
 
+
 ### Importing Data ###
 
 # Importing the csv file and keeping stringsAsFactors= T for automatically converting all
@@ -26,38 +27,40 @@ ggplot(data=bank, aes(x=age, col=y))+
 boxplot(age ~ y, data = bank, main= "age vs y")
 
 
-# Creating a table to visualize the relationship between the job a person is doing and 
-# whether he subscribed for the plan or not
+# Creating a table to visualize the relationship between the job role of a person and 
+# variable y indicating whether a person subscribed for the plan or not
 table(bank$job, bank$y)
-# Lets look at the proportion of people subscribing in accordance with their job role
+# Lets look at the proportion of people subscribing with repect to their job roles
 prop.table(table(bank$job, bank$y), 1)
 # Plotting the proportion table shows that students and retired people have very high probability
 # of saying "yes" to the subscription compared to all other categories. And blue-collar, entrepreneur and 
-# services are least probable for "yes".
+# services are the least probable categories for saying "yes".
 plot((prop.table(table(bank$job, bank$y), 1)), main="job vs y")
 
 
-# A similar plot of proportions for marital status vs y has little to no information
+# A similar plot of proportions for marital status vs y shows the spread of y is almost even
+# and there is very little to no insight
 prop.table(table(bank$marital, bank$y), 1)
 plot((prop.table(table(bank$marital, bank$y), 1)), main="marital Status vs y")
 
 
-# The plot of proportion table shows that people who are illiterate, or having university degree and 
+# The plot of proportion table shows that people who are illiterate, people who has a university degree and 
 # the unknown category has more chance of taking the subscription
 prop.table(table(bank$education, bank$y), 1)
 plot((prop.table(table(bank$education, bank$y), 1)), main="education vs y")
 # But histogram of education shows that concentration of people who are illiterate is very small compared to other categories.
-# So people having a university degree is more reasonable target.
+# So people having a university degree are more reasonable target.
 ggplot(bank, aes(x=education, col=y))+
     geom_histogram(stat="count")
 
 # The default variable is very less informative as it has only 3 values in the category of people
-# who have defaulted and large number of unkown values, making it worthless for the analysis.
+# who have defaulted and also large number of unkown values. So we can't get any understanding of its relation
+# with y
 table(bank$default)
 
 
-# The proportion table shows that the variable y is almost uniformly distributed over all the 3 categories
-# of housing and loan variables which indicates that these variables are very little correlation with y
+# The proportion table shows that the variable y is almost uniformly distributed in all the 3 categories
+# of both housing and loan variables which indicates that these variables has very less correlation with variable y
 ggplot(bank, aes(x=housing, col=y))+
     geom_histogram(stat="count")
 plot((prop.table(table(bank$housing, bank$y), 1)), main="housing vs y")
@@ -68,14 +71,12 @@ plot((prop.table(table(bank$loan, bank$y), 1)), main="loan vs y")
 
 
 # The people who were contacted through cellular phone have slighlty high probability of taking the 
-# plan but a scatter plot involving consumer price index, y and contact shows that most of the people 
-# who were contacted through telephone are people with cpi above 94 which means the variable is skewed
-# and highly dependent on the consumer price index, so it has very little information by itself
-plot((prop.table(table(bank$contact, bank$y), 1)), main="contact vs y")
-ggplot(data=bank, aes(x=cons.price.idx,y=y, col=contact))+
-    geom_jitter()+
-    ggtitle("consumer price index vs y based on medium of contact")+
-    theme(plot.title = element_text(hjust = 0.5))
+# plan compared to the people who were contacted through a telephone
+ggplot(bank, aes(x=contact, col=y))+
+    geom_bar()
+ggplot(bank, aes(x=contact, col=y))+
+    geom_bar(position = "fill")
+
 
 # The plot of proportion table and scatterplot of month and day of the week on which people were contacted
 # shows that the months december, march, october and september have a very high probability of people taking 
@@ -100,12 +101,13 @@ ggplot(bank, aes(x=y, y=duration))+
     geom_boxplot()
 
 
-# The boxplot and table of campaign(number of times client was contacted during this campaign) shows that it is very 
-# unlikely that client will say "yes" after contacting the client more than 10 times.
+# The proportion table of campaign(number of times client was contacted during this campaign) shows that it is very 
+# unlikely that client will say "yes" after contacting the client more than 15 times with a probability of 1.4%
 ggplot(bank, aes(x=y, y=campaign))+
     geom_boxplot()
 table(bank$campaign, bank$y)
-plot(table(bank$campaign, bank$y), main="campaign vs y")
+prop.table(table(bank[bank$campaign>15, ]$y))
+prop.table(table(bank[bank$campaign<15, ]$y))
 
 
 # The proportion table of pdays (number of days that passed by after the client was last contacted from a 
