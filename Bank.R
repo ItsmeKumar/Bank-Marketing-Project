@@ -1,7 +1,15 @@
-setwd("~/Downloads/ML/bank-additional")
+#' ---
+#' title: "Bank Marketing Project"
+#' author: 
+#' date:
+#' output: html_document
+#' ---
+
 
 
 ### Importing Data ###
+
+setwd("~/Downloads/ML/bank-additional")
 
 # Importing the csv file and keeping stringsAsFactors= T for automatically converting all
 # the string variables into factors
@@ -24,34 +32,41 @@ ggplot(data=bank, aes(x=age, col=y))+
     ggtitle("Age distribution based on subscription")+
     theme(plot.title = element_text(hjust = 0.5))
 # A boxplot of "age vs y" also reflects the same information
-boxplot(age ~ y, data = bank, main= "age vs y")
-
+ggplot(bank, aes(x=y, y=age, col=y))+
+    geom_boxplot()
 
 # Creating a table to visualize the relationship between the job role of a person and 
 # variable y indicating whether a person subscribed for the plan or not
 table(bank$job, bank$y)
 # Lets look at the proportion of people subscribing with repect to their job roles
 prop.table(table(bank$job, bank$y), 1)
-# Plotting the proportion table shows that students and retired people have very high probability
+# Plotting the proportions of each category shows that students and retired people have very high probability
 # of saying "yes" to the subscription compared to all other categories. And blue-collar, entrepreneur and 
 # services are the least probable categories for saying "yes".
-plot((prop.table(table(bank$job, bank$y), 1)), main="job vs y")
-
+ggplot(bank, aes(x=job, col=y))+
+    geom_histogram(stat="count")+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(bank, aes(x=job, col=y))+
+    geom_histogram(stat="count", position = "fill")+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # A similar plot of proportions for marital status vs y shows the spread of y is almost even
 # and there is very little to no insight
 prop.table(table(bank$marital, bank$y), 1)
-plot((prop.table(table(bank$marital, bank$y), 1)), main="marital Status vs y")
+plot((prop.table(table(bank$marital, bank$y), 1)), main="marital Status vs y", col=c("black","grey"))
 
 
-# The plot of proportion table shows that people who are illiterate, people who has a university degree and 
+# The plot of proportions shows that people who are illiterate, people who has a university degree and 
 # the unknown category has more chance of taking the subscription
 prop.table(table(bank$education, bank$y), 1)
-plot((prop.table(table(bank$education, bank$y), 1)), main="education vs y")
+ggplot(bank, aes(x=education, col=y))+
+    geom_histogram(stat="count", position = "fill")+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 # But histogram of education shows that concentration of people who are illiterate is very small compared to other categories.
 # So people having a university degree are more reasonable target.
 ggplot(bank, aes(x=education, col=y))+
-    geom_histogram(stat="count")
+    geom_histogram(stat="count")+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # The default variable is very less informative as it has only 3 values in the category of people
 # who have defaulted and also large number of unkown values. So we can't get any understanding of its relation
@@ -59,16 +74,17 @@ ggplot(bank, aes(x=education, col=y))+
 table(bank$default)
 
 
-# The proportion table shows that the variable y is almost uniformly distributed in all the 3 categories
+# The proportion plots show that the variable y is almost uniformly distributed in all the 3 categories
 # of both housing and loan variables which indicates that these variables has very less correlation with variable y
 ggplot(bank, aes(x=housing, col=y))+
     geom_histogram(stat="count")
-plot((prop.table(table(bank$housing, bank$y), 1)), main="housing vs y")
+ggplot(bank, aes(x=housing, col=y))+
+    geom_histogram(stat="count", position = "fill")
 
 ggplot(bank, aes(x=loan, col=y))+
     geom_histogram(stat="count")
-plot((prop.table(table(bank$loan, bank$y), 1)), main="loan vs y")
-
+ggplot(bank, aes(x=loan, col=y))+
+    geom_histogram(stat="count", position = "fill")
 
 # The people who were contacted through cellular phone have slighlty high probability of taking the 
 # plan compared to the people who were contacted through a telephone
@@ -85,7 +101,8 @@ ggplot(bank, aes(x=contact, col=y))+
 ggplot(bank, aes(x=month, col=y))+
     geom_histogram(stat="count")
 prop.table(table(bank$month, bank$y),1)
-plot((prop.table(table(bank$month, bank$y), 1)), main="month vs y")
+ggplot(bank, aes(x=month, col=y))+
+    geom_histogram(stat="count", position = "fill")
 ggplot(bank, aes(x=month, y=day_of_week, col=y)) +
     geom_jitter()
 
@@ -97,13 +114,13 @@ ggplot(bank, aes(x=month, y=day_of_week, col=y)) +
 # duration should be left out while building a true predictive model, as we only get to know call duration after speaking
 # to the customer, but we would automatically know if a person subscribed or not (y="yes" or "no") by the end of the call
 # So this variable can't be used in reality
-ggplot(bank, aes(x=y, y=duration))+
+ggplot(bank, aes(x=y, y=duration, col=y))+
     geom_boxplot()
 
 
 # The proportion table of campaign(number of times client was contacted during this campaign) shows that it is very 
 # unlikely that client will say "yes" after contacting the client more than 15 times with a probability of 1.4%
-ggplot(bank, aes(x=y, y=campaign))+
+ggplot(bank, aes(x=y, y=campaign, col=y))+
     geom_boxplot()
 table(bank$campaign, bank$y)
 prop.table(table(bank[bank$campaign>15, ]$y))
@@ -128,10 +145,10 @@ prop.table(table(bank[bank$pdays==999,]$y))
 # at least once before this campaign. And complimentarily, the people who were not contacted even once before this campaign are also not
 # contacted even once in this campaign. This indicates that the variable previous is highly dependent on the variable pdays and doesn't play
 # significant role in giving extra information
-ggplot(bank[bank$previous!=0,], aes(x=y))+
+ggplot(bank[bank$previous!=0,], aes(x=y, col=y))+
     geom_bar()
 prop.table(table(bank[bank$previous!=0,]$y))
-ggplot(bank[bank$previous==0,], aes(x=y))+
+ggplot(bank[bank$previous==0,], aes(x=y, col=y))+
     geom_bar()
 prop.table(table(bank[bank$previous==0,]$y))
 
@@ -144,13 +161,13 @@ table(bank[bank$previous==0,]$pdays)
 # not contacted previously at all have very low chance of taking the plan. But looking at the people who are nonexistent tells that they are the same group
 # of people whose pdays=999 or those who were not contacted during this campaign at all, which inevitably means that they all have y=0. So the variable although
 # provides an interesting insight, it is highly dependedent on pdays variable.
-ggplot(bank[bank$poutcome=="nonexistent",], aes(x=y))+
+ggplot(bank[bank$poutcome=="nonexistent",], aes(x=y, col=y))+
     geom_bar()
 prop.table(table(bank[bank$poutcome=="nonexistent",]$y))
-ggplot(bank[bank$poutcome=="failure",], aes(x=y))+
+ggplot(bank[bank$poutcome=="failure",], aes(x=y, col=y))+
     geom_bar()
 prop.table(table(bank[bank$poutcome=="failure",]$y))
-ggplot(bank[bank$poutcome=="success",], aes(x=y))+
+ggplot(bank[bank$poutcome=="success",], aes(x=y, col=y))+
     geom_bar()
 prop.table(table(bank[bank$poutcome=="success",]$y))
 
@@ -199,7 +216,10 @@ ggplot(data=bank, aes(x=euribor3m, col=y))+
     geom_histogram(position = "fill")+
     ggtitle("consumer confidence index based on subscription")+
     theme(plot.title = element_text(hjust = 0.5))
-boxplot(euribor3m ~ y, data = bank)
+ggplot(bank, aes(x=y, y=euribor3m, col=y))+
+    geom_boxplot()+
+    ggtitle("Euribor vs y")+
+    theme(plot.title = element_text(hjust = 0.5))
 
 prop.table(table(bank[bank$euribor3m<5,]$y))
 prop.table(table(bank[bank$euribor3m<3,]$y))
@@ -210,7 +230,7 @@ prop.table(table(bank[bank$euribor3m<1,]$y))
 # the efficiency of the campaign decreases. When the number of employees are less than 5000 the probability of a client
 # accepting the offer increases significantly.
 bartable <- table(bank$nr.employed, bank$y)
-barplot(bartable, beside = TRUE, legend = levels(unique(bank$nr.employed)))
+barplot(bartable, beside = TRUE, legend = levels(unique(bank$nr.employed)), main="employed vs y")
 ggplot(data=bank, aes(x=nr.employed, col=y))+
     geom_histogram()+
     ggtitle("consumer confidence index based on subscription")+
@@ -333,7 +353,7 @@ dt_accuracy
 # with a area under the curve value of 0.74
 pred_dt <- prediction(predictions = as.numeric(tree_pred), labels = as.numeric(test_data$y))
 perf_dt <- performance(pred_dt,measure = "tpr", x.measure = "fpr")
-plot(perf_dt, main="decision tree")
+plot(perf_dt, main="Decision Tree 1")
 perf.auc <- performance(pred_dt, measure = "auc")
 dt_auc <- unlist(perf.auc@y.values)
 dt_auc
@@ -369,7 +389,7 @@ dt2_accuracy
 # The ROC curve also reflects improvement in the prediction of true positives with auc of 0.8845
 pred_dt_2 <- prediction(predictions = as.numeric(tree_pred_2), labels = as.numeric(test_data$y))
 perf_dt_2 <- performance(pred_dt_2,measure = "tpr", x.measure = "fpr")
-plot(perf_dt_2, main="decision tree")
+plot(perf_dt_2, main="Decision Tree 2")
 perf.auc_dt_2 <- performance(pred_dt_2, measure = "auc")
 dt2_auc <- unlist(perf.auc_dt_2@y.values)
 dt2_auc
@@ -408,7 +428,7 @@ nn_accuracy
 nnet_pred_fac <- as.factor(nnet_pred) 
 pred_nn <- prediction(predictions = as.numeric(nnet_pred_fac), labels = as.numeric(test_data$y))
 perf_nn <- performance(pred_nn,measure = "tpr", x.measure = "fpr")
-plot(perf_nn, main="neural net")
+plot(perf_nn, main="Neural Net 1")
 perf.auc_nn <- performance(pred_nn, measure = "auc")
 nn_auc <- unlist(perf.auc_nn@y.values)
 nn_auc
@@ -439,7 +459,7 @@ nn2_accuracy
 nnet_pred_fac_2 <- as.factor(nnet_pred_2) 
 pred_nn_2 <- prediction(predictions = as.numeric(nnet_pred_fac_2), labels = as.numeric(test_data$y))
 perf_nn_2 <- performance(pred_nn_2,measure = "tpr", x.measure = "fpr")
-plot(perf_nn_2, main="neural net")
+plot(perf_nn_2, main="Neural Net 2")
 perf.auc_nn_2 <- performance(pred_nn_2, measure = "auc")
 nn2_auc <- unlist(perf.auc_nn_2@y.values)
 nn2_auc
