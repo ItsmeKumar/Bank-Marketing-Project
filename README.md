@@ -2,8 +2,7 @@ Bank Marketing Project
 
 Citation Request:
 
-This dataset is publicly available for research. The details are described in [Moro et al., 2014]. 
-Please include this citation if you plan to use this database:
+This dataset is publicly available for research. The details are described in [Moro et al., 2014]. Please include this citation if you plan to use this database:
 
 [Moro et al., 2014] S. Moro, P. Cortez and P. Rita. A Data-Driven Approach to Predict the Success of Bank Telemarketing. Decision Support Systems, In press, http://dx.doi.org/10.1016/j.dss.2014.03.001
 
@@ -31,13 +30,13 @@ Input variables:
 
 7 - loan: has personal loan? (categorical: "no","yes","unknown")
 
-8 - contact: contact communication type (categorical: "cellular","telephone") 
+8 - contact: contact communication type (categorical: "cellular","telephone")
 
 9 - month: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")
 
 10 - day_of_week: last contact day of the week (categorical: "mon","tue","wed","thu","fri")
 
-11 - duration: last contact duration, in seconds (numeric). Important note:  this attribute highly affects the output target (e.g., if duration=0 then y="no"). Yet, the duration is not known before a call is performed. Also, after the end of the call y is obviously known. Thus, this input should only be included for benchmark purposes and should be discarded if the intention is to have a realistic predictive model.
+11 - duration: last contact duration, in seconds (numeric). Important note: this attribute highly affects the output target (e.g., if duration=0 then y="no"). Yet, the duration is not known before a call is performed. Also, after the end of the call y is obviously known. Thus, this input should only be included for benchmark purposes and should be discarded if the intention is to have a realistic predictive model.
 
 12 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)
 
@@ -49,9 +48,9 @@ Input variables:
 
 16 - emp.var.rate: employment variation rate - quarterly indicator (numeric)
 
-17 - cons.price.idx: consumer price index - monthly indicator (numeric)     
+17 - cons.price.idx: consumer price index - monthly indicator (numeric)
 
-18 - cons.conf.idx: consumer confidence index - monthly indicator (numeric)     
+18 - cons.conf.idx: consumer confidence index - monthly indicator (numeric)
 
 19 - euribor3m: euribor 3 month rate - daily indicator (numeric)
 
@@ -61,4 +60,4 @@ Output variable (desired target):
 
 21 - y - has the client subscribed a term deposit? (binary: "yes","no")
 
-Missing Attribute Values: There are several missing values in some categorical attributes, all coded with the "unknown" label. These missing values can be treated as a possible class label or using deletion or imputation techniques. 
+Missing Attribute Values: There are several missing values in some categorical attributes, all coded with the "unknown" label. These missing values can be treated as a possible class label or using deletion or imputation techniques.
